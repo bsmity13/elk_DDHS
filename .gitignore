@@ -1,0 +1,10 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+models/
+pred/
+old/
+fig/
+open_timing.csv
+timing.csv
