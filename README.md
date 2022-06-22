@@ -18,6 +18,8 @@ To be submitted for review to *Ecology Letters*.
 
 Repository version 0.1 -- Prior to peer review
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6687905.svg)](https://doi.org/10.5281/zenodo.6687905)
+
 This repository contains the processed data and code needed to fit the model described in the manuscript. The models are fit using MCMC in R with the package `nimble`. The posterior samples are stored in directory `models/`, but they are almost 3 GB in total. 
 
 To save space in this repository, the posterior samples are not included; however, a very small sample of the posterior is included in the directory `demo_models` to help demo the code. Scripts, such as `02_figures.R`, contain a variable `demo_data` that can be set to `TRUE` to load the sample posterior for testing the code.
