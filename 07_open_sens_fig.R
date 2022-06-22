@@ -3,7 +3,7 @@
 #---------------Brian J. Smith--------------X
 #--------Openness Sensitivity Figures-------X
 #===========================================X
-#-----------Last update 2022-04-22----------X
+#-----------Last update 2022-06-22----------X
 ############################################X
 
 #Load packages----
@@ -96,15 +96,15 @@ round(prop_oc2 <- (ncell - length(flagged_oc2))/ncell, 3)
 
 # ... original data ----
 samples1_orig <- list(
-  ch1 = readRDS("models/samples1_ch1_2021-11-24.rds"),
-  ch2 = readRDS("models/samples1_ch2_2021-11-24.rds")#,
-  # ch3 = readRDS("models/samples1_ch3_2021-11-24.rds")
+  ch1 = readRDS("models/samples1_ch1_2022-02-22.rds"),
+  ch2 = readRDS("models/samples1_ch2_2022-02-22.rds")#,
+  # ch3 = readRDS("models/samples1_ch3_2022-02-22.rds")
 )
 
 samples2_orig <- list(
-  ch1 = readRDS("models/samples2_ch1_2021-11-24.rds"),
-  ch2 = readRDS("models/samples2_ch2_2021-11-24.rds")#,
-  # ch3 = readRDS("models/samples2_ch3_2021-11-24.rds")
+  ch1 = readRDS("models/samples2_ch1_2022-02-22.rds"),
+  ch2 = readRDS("models/samples2_ch2_2022-02-22.rds")#,
+  # ch3 = readRDS("models/samples2_ch3_2022-02-22.rds")
 )
 
 # Get rid of burn-in and thin
@@ -123,13 +123,13 @@ gc()
 
 # ... openness cutoff 1 ----
 samples1_oc1 <- list(
-  ch1 = readRDS("models/sens/samples1_ch_oc1_1_2021-12-06.rds"),
-  ch2 = readRDS("models/sens/samples1_ch_oc1_2_2021-12-06.rds")
+  ch1 = readRDS("models/sens/samples1_ch_oc1_1_2022-04-30.rds"),
+  ch2 = readRDS("models/sens/samples1_ch_oc1_2_2022-04-29.rds")
 )
 
 samples2_oc1 <- list(
-  ch1 = readRDS("models/sens/samples2_ch_oc1_1_2021-12-06.rds"),
-  ch2 = readRDS("models/sens/samples2_ch_oc1_2_2021-12-06.rds")
+  ch1 = readRDS("models/sens/samples2_ch_oc1_1_2022-04-30.rds"),
+  ch2 = readRDS("models/sens/samples2_ch_oc1_2_2022-04-29.rds")
 )
 
 # Get rid of burn-in and thin
@@ -146,13 +146,13 @@ samples2_oc1 <- lapply(samples2_oc1, function(x) {
 
 # ... openness cutoff 2 ----
 samples1_oc2 <- list(
-  ch1 = readRDS("models/sens/samples1_ch_oc2_1_2021-12-04.rds"),
-  ch2 = readRDS("models/sens/samples1_ch_oc2_2_2021-12-04.rds")
+  ch1 = readRDS("models/sens/samples1_ch_oc2_1_2022-04-27.rds"),
+  ch2 = readRDS("models/sens/samples1_ch_oc2_2_2022-04-27.rds")
 )
 
 samples2_oc2 <- list(
-  ch1 = readRDS("models/sens/samples2_ch_oc2_1_2021-12-04.rds"),
-  ch2 = readRDS("models/sens/samples2_ch_oc2_2_2021-12-04.rds")
+  ch1 = readRDS("models/sens/samples2_ch_oc2_1_2022-04-27.rds"),
+  ch2 = readRDS("models/sens/samples2_ch_oc2_2_2022-04-27.rds")
 )
 
 # Get rid of burn-in and thin
@@ -507,23 +507,30 @@ ggsave("fig/open_sens/density_rough.tiff", plot = rough_dens_plot,
 
 # ... DDHS ----
 # ... ... biomass ----
-bio_ddhs_x1 <- create_pred_dat(dat, 
-                               biomass = quantile(dat$biomass_orig, 0.95),
+# Biomass x1 value
+biomass_x1 <- mean(dat$biomass_orig) + 0.5 * bio_sd
+biomass_x1_kgha <- exp(biomass_x1) * lbac_kgha
+
+# Biomass x2 value
+biomass_x2 <- mean(dat$biomass_orig) - 0.5* bio_sd
+biomass_x2_kgha <- exp(biomass_x2) * lbac_kgha
+
+bio_ddhs_x1 <- create_pred_dat(dat, biomass = biomass_x1,
                                log_dens = seq(quantile(dat$log_dens, 0.05),
                                               quantile(dat$log_dens, 0.95),
                                               length.out = 50)) %>%
   intxn() %>% 
   scale_dat(scale_df = scale_df) %>% 
-  mutate(biomass_nat = exp(biomass_orig),
+  mutate(biomass_nat = exp(biomass_orig) * lbac_kgha,
          dens = round(exp(log_dens), 1))
 
-bio_ddhs_x2 <- create_pred_dat(dat, biomass = quantile(dat$biomass_orig, 0.05),
+bio_ddhs_x2 <- create_pred_dat(dat, biomass = biomass_x2,
                                log_dens = seq(quantile(dat$log_dens, 0.05),
                                               quantile(dat$log_dens, 0.95),
                                               length.out = 50)) %>%
   intxn() %>% 
   scale_dat(scale_df = scale_df) %>% 
-  mutate(biomass_nat = exp(biomass_orig),
+  mutate(biomass_nat = exp(biomass_orig) * lbac_kgha,
          dens = round(exp(log_dens), 1))
 
 # Predict lambda
@@ -578,8 +585,8 @@ for (i in 1:nrow(bio_ddhs_x1_oc)) {
     #             alpha = 0.5) +
     geom_line() +
     xlab(expression("Average Elk Density" ~ (elk/km^2))) +
-    ylab("RSS for Biomass") +
-    coord_cartesian(ylim = c(1, 10)) +
+    ylab("RSS for Food (Biomass)") +
+    coord_cartesian(ylim = c(1, 3)) +
     scale_color_discrete(name = "Openness Cutoff",
                          breaks = c("orig", "oc1", "oc2"),
                          labels = c("Original", ">30% Open", ">50% Open")) +
@@ -1095,7 +1102,7 @@ ggsave("fig/open_sens/predator_rough.tiff", plot = rough_pred_plot,
 
 # Main result figure ----
 
-# 1 SD of openness and roughness
+# 0.5 SD of openness and roughness
 bio_sd <- scale_df %>% 
   filter(term == "biomass") %>% 
   pull(sd)
@@ -1114,13 +1121,13 @@ rough_sd <- scale_df %>%
 open_safe_x1 <- 1
 
 # Openness x2 value
-open_safe_x2 <- open_safe_x1 - (1 * open_sd)
+open_safe_x2 <- open_safe_x1 - (0.5 * open_sd)
 
 # Roughness x1 value
 rough_safe_x1 <- 23
 
 # Roughness x2 value
-rough_safe_x2 <- rough_safe_x1 - (1 * rough_sd)
+rough_safe_x2 <- rough_safe_x1 - (0.5 * rough_sd)
 
 safe_ddhs_x1 <- create_pred_dat(dat, 
                                 open = open_safe_x1,
@@ -1194,7 +1201,7 @@ for (i in 1:nrow(safe_ddhs_x1_oc)) {
     # geom_ribbon(aes(ymin = q25, ymax = q75), fill = color_50,
     #             alpha = 0.5) +
     geom_line() +
-    coord_cartesian(ylim = c(1, 6)) +
+    coord_cartesian(ylim = c(1, 3)) +
     xlab(expression("Elk Density" ~ (elk/km^2))) +
     ylab("RSS for Safety") +
     scale_color_discrete(name = "Openness Cutoff",
@@ -1205,3 +1212,103 @@ for (i in 1:nrow(safe_ddhs_x1_oc)) {
 ggsave("fig/open_sens/ddhs_safety.tiff", plot = safe_ddhs_plot,
        width = 6, height = 3, units = "in", compression = "lzw",
        device = agg_tiff)
+
+# Figure S3 ----
+# Split calculations with OCs together into 30% and 50%
+food_safe_30 <- bind_rows(bio = bio_ddhs_x1_oc,
+                          safe = safe_ddhs_x1_oc,
+                          .id = "driver") %>% 
+  filter(oc == "oc1") %>% 
+  dplyr::select(driver, dens, rss, q95:q05) %>% 
+  pivot_longer(cols = c(q95:q75), 
+               names_to = "quantile_upr", values_to = "upr") %>% 
+  pivot_longer(cols = c(q25:q05), 
+               names_to = "quantile_lwr", values_to = "lwr") %>% 
+  mutate(level_upr = case_when(
+    quantile_upr == "q95" ~ "90%",
+    quantile_upr == "q90" ~ "80%",
+    quantile_upr == "q75" ~ "50%",
+    TRUE ~ NA_character_
+  ),
+  level_lwr = case_when(
+    quantile_lwr == "q05" ~ "90%",
+    quantile_lwr == "q10" ~ "80%",
+    quantile_lwr == "q25" ~ "50%",
+    TRUE ~ NA_character_
+  )) %>% 
+  filter(level_upr == level_lwr) %>% 
+  mutate(driver_level = paste(driver, level_upr, sep = "_"))
+
+food_safe_50 <- bind_rows(bio = bio_ddhs_x1_oc,
+                          safe = safe_ddhs_x1_oc,
+                          .id = "driver") %>% 
+  filter(oc == "oc2") %>% 
+  dplyr::select(driver, dens, rss, q95:q05) %>% 
+  pivot_longer(cols = c(q95:q75), 
+               names_to = "quantile_upr", values_to = "upr") %>% 
+  pivot_longer(cols = c(q25:q05), 
+               names_to = "quantile_lwr", values_to = "lwr") %>% 
+  mutate(level_upr = case_when(
+    quantile_upr == "q95" ~ "90%",
+    quantile_upr == "q90" ~ "80%",
+    quantile_upr == "q75" ~ "50%",
+    TRUE ~ NA_character_
+  ),
+  level_lwr = case_when(
+    quantile_lwr == "q05" ~ "90%",
+    quantile_lwr == "q10" ~ "80%",
+    quantile_lwr == "q25" ~ "50%",
+    TRUE ~ NA_character_
+  )) %>% 
+  filter(level_upr == level_lwr) %>% 
+  mutate(driver_level = paste(driver, level_upr, sep = "_"))
+
+S3A <- open_hist
+
+(S3B <- food_safe_30 %>% 
+    ggplot(aes(x = dens, y = rss, 
+               color = driver, fill = driver_level)) +
+    geom_ribbon(aes(ymin = lwr, ymax = upr),
+                alpha = 0.2, show.legend = FALSE, color = NA) +
+    geom_line(size = 0.7) +
+    scale_color_manual(name = "Habitat Variable",
+                       breaks = c("bio", "safe"),
+                       labels = c("Food", "Safety"),
+                       values = c(color_a, color_b)) +
+    scale_fill_manual(name = "Habitat Variable",
+                      breaks = c("bio_90%", "bio_80%", "bio_50%",
+                                 "open_90%", "open_80%", "open_50%"),
+                      values = c(color_a_90, color_a_80, color_a_50,
+                                 color_b_90, color_b_80, color_b_50)) +
+    xlab(expression("Average Elk Density" ~ (elk/km^2))) +
+    ylab("RSS") +
+    coord_cartesian(ylim = c(1.2, 2.8)) +
+    theme_bw())
+
+(S3C <- food_safe_50 %>% 
+    ggplot(aes(x = dens, y = rss, 
+               color = driver, fill = driver_level)) +
+    geom_ribbon(aes(ymin = lwr, ymax = upr),
+                alpha = 0.2, show.legend = FALSE, color = NA) +
+    geom_line(size = 0.7) +
+    scale_color_manual(name = "Habitat Variable",
+                       breaks = c("bio", "safe"),
+                       labels = c("Food", "Safety"),
+                       values = c(color_a, color_b)) +
+    scale_fill_manual(name = "Habitat Variable",
+                      breaks = c("bio_90%", "bio_80%", "bio_50%",
+                                 "open_90%", "open_80%", "open_50%"),
+                      values = c(color_a_90, color_a_80, color_a_50,
+                                 color_b_90, color_b_80, color_b_50)) +
+    xlab(expression("Average Elk Density" ~ (elk/km^2))) +
+    ylab("RSS") +
+    coord_cartesian(ylim = c(1.2, 2.8)) +
+    theme_bw())
+
+figS3 <- S3A / (S3B + S3C) +
+  plot_annotation(tag_levels = "A") +
+  plot_layout(guides = "collect")
+
+ggsave("fig/ms/figS3.tif", plot = figS3, device = agg_tiff,
+       width = 173, height = 130, units = "mm", dpi = 500,
+       compression = "lzw")
