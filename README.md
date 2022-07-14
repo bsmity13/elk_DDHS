@@ -3,16 +3,15 @@
 _Authors_:  
 
   - Brian J. Smith <a itemprop="sameAs" content="https://orcid.org/0000-0002-0531-0492" href="https://orcid.org/0000-0002-0531-0492" target="orcid.widget" rel="me noopener noreferrer" style="vertical-align:top;"><img src="https://orcid.org/sites/default/files/images/orcid_16x16.png" alt="ORCID iD icon" style="width:1em;margin-right:.5em;"/></a>
-
-  - Dan MacNulty
-  - Daniel R. Stahler
+  - Dan MacNulty <a itemprop="sameAs" content="https://orcid.org/0000-0002-9173-8910" href="https://orcid.org/0000-0002-9173-8910" target="orcid.widget" rel="me noopener noreferrer" style="vertical-align:top;"><img src="https://orcid.org/sites/default/files/images/orcid_16x16.png" alt="ORCID iD icon" style="width:1em;margin-right:.5em;"/></a>
+  - Daniel R. Stahler <a itemprop="sameAs" content="https://orcid.org/0000-0002-8740-6075" href="https://orcid.org/0000-0002-8740-6075" target="orcid.widget" rel="me noopener noreferrer" style="vertical-align:top;"><img src="https://orcid.org/sites/default/files/images/orcid_16x16.png" alt="ORCID iD icon" style="width:1em;margin-right:.5em;"/></a>
   - Douglas W. Smith
-  - Tal Avgar
+  - Tal Avgar <a itemprop="sameAs" content="https://orcid.org/0000-0002-8764-6976" href="https://orcid.org/0000-0002-8764-6976" target="orcid.widget" rel="me noopener noreferrer" style="vertical-align:top;"><img src="https://orcid.org/sites/default/files/images/orcid_16x16.png" alt="ORCID iD icon" style="width:1em;margin-right:.5em;"/></a>
 
 ## Manuscript status
-To be published to bioRxiv week of June 22, 2022.  
+Published to bioRxiv on July 14, 2022.  https://doi.org/10.1101/2022.07.12.499670
 
-To be submitted for review to *Ecology Letters*.
+Submitted for review to *Ecology Letters* on July 12, 2022.
 
 ## About Repository
 
