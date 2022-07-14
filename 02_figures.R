@@ -141,6 +141,7 @@ dir.create("fig", showWarnings = FALSE)
 dir.create("fig/map_resid", showWarnings = FALSE)
 dir.create("fig/map_scaled", showWarnings = FALSE)
 dir.create("fig/map_unscaled", showWarnings = FALSE)
+dir.create("fig/tweet", showWarnings = FALSE)
 
 # Coda diagnostics ----
 coda1 <- lapply(samples1, as.mcmc)
@@ -1646,6 +1647,10 @@ ggsave("fig/high_v_low_RSS.png", plot = hi_v_lo_rss,
        width = 10, height = 4, units = "in",
        device = agg_png)
 
+diff_pal <- brewer.pal(3, "RdBu")
+diff_pal[1] <- colorspace::darken(diff_pal[1], 0.4)
+diff_pal[3] <- colorspace::darken(diff_pal[3], 0.4)
+
 (diff_rss <- map_rss %>% 
     arrange(cell, dens_label) %>% 
     group_by(cell) %>% 
@@ -1656,8 +1661,9 @@ ggsave("fig/high_v_low_RSS.png", plot = hi_v_lo_rss,
     xlab(NULL) +
     ylab(NULL) +
     scale_fill_gradient2(name = "Δ log-RSS", 
-                         high = "forestgreen",
-                         mid = "gray90", midpoint = 0) +
+                         high = diff_pal[1],
+                         mid = diff_pal[2], 
+                         low = diff_pal[3], midpoint = 0) +
     theme_bw())
 
 ggsave("fig/high_v_low_RSS_diff.tif", plot = diff_rss,
@@ -1769,6 +1775,11 @@ fig5 <- diff_rss
 ggsave("fig/ms/fig5.tif", plot = fig5, device = agg_tiff,
        width = 173, height = 100, units = "mm", dpi = 500,
        compression = "lzw")
+
+# Tweetable
+ggsave("fig/tweet/fig5.png", plot = fig5,
+       width = 5, height = 4, units = "in",
+       device = agg_png)
 
 
 
