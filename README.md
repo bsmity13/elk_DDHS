@@ -13,9 +13,11 @@ Published to bioRxiv on July 14, 2022.  https://doi.org/10.1101/2022.07.12.49967
 
 Submitted for review to *Ecology Letters* on July 12, 2022.
 
+Resubmitted to *Ecology Letters* after addressing peer review on October 26, 2022.
+
 ## About Repository
 
-Repository version 0.1 -- Prior to peer review
+Repository version 0.2 -- First revision
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6687905.svg)](https://doi.org/10.5281/zenodo.6687905)
 
@@ -41,7 +43,7 @@ All data are contained in the directory `data/`. Data have been pre-processed fr
 - `01_fit_model.R` -- uses package `nimble` and custom functions to fit the full model
 - `01_fit_null_model.R` -- uses package `nimble` and custom functions to fit the null model
 - `02_figures.R` -- loads posterior samples from full model and makes the majority of diagnostic plots and manuscript figures
-- `03_spatial_corr.R` -- checks model residuals for spatial autocorrelation using spline correlograms
+- `03_spatio-tempo_corr.R` -- checks model residuals for spatial autocorrelation using spline correlograms and temporal patterns (by survey date)
 - `04_pseudoR2.R` -- calculates pseudo-R^2^ by comparing posteriors of full model to null model
 - `05_oos_valid.R` -- calculates out-of-sample (OOS) validation metrics
 - `06_open_sens_fit.R` -- fits full model to reduced datasets to check potential sensitivity to imperfect detection due to forest cover
