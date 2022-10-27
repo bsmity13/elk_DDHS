@@ -19,6 +19,12 @@ Resubmitted to *Ecology Letters* after addressing peer review on October 26, 202
 
 ### Versions 
 
+The following DOI will always resolve to the latest version:
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6687904.svg)](https://doi.org/10.5281/zenodo.6687904)
+
+Other links are version-specific.
+
 #### Repository version 0.1 -- Prior to peer review
 
 This release (v0.1) was created before publishing preprint and before peer-review. The repository is archived here:
@@ -27,7 +33,9 @@ This release (v0.1) was created before publishing preprint and before peer-revie
 
 #### Repository version 0.2 -- First revision
 
-This release (v0.2) was created in response to peer review and contains all data and code used in the resubmission. This repository will now be archived and an updated link will be posted here.
+This release (v0.2) was created in response to peer review and contains all data and code used in the resubmission. The repository is archived here:
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7259278.svg)](https://doi.org/10.5281/zenodo.7259278)
 
 ### Overview
 
