@@ -60,7 +60,9 @@ scale_dat <- function(dat, scale_df) {
 # Prep data for Nimble ----
 prep_nimble <- function(dat, n_beta, rand_seed = rpois(1, 99), 
                         spatial_effect = TRUE,
-                        open_cutoff = 0, null = FALSE) {
+                        open_cutoff = 0, 
+                        open_direction = "less", 
+                        null = FALSE) {
   # Set random seed (for generating initial values)
   set.seed(rand_seed)
   
@@ -82,7 +84,15 @@ prep_nimble <- function(dat, n_beta, rand_seed = rpois(1, 99),
     
     # Flag any cell where openness is ever below openness cutoff
     # (done for consistency with indexing over time)
-    flagged <- sort(unique(dat$cell[which(dat$open_orig < open_cutoff)]))
+    
+    # Check open_direction
+    stopifnot(open_direction %in% c("greater", "less"))
+    
+    if (open_direction == "less") {
+      flagged <- sort(unique(dat$cell[which(dat$open_orig < open_cutoff)]))
+    } else {
+      flagged <- sort(unique(dat$cell[which(dat$open_orig > open_cutoff)]))
+    }
     
     # Remove any cell that is flagged
     dat <- dat[which(!(dat$cell %in% flagged)),]

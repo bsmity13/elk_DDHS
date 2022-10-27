@@ -289,10 +289,10 @@ comb %>%
   group_by(sample) %>% 
   summarize(mean(r))
 
-# Figure 6 ----
+# Figure S10 ----
 # Colors
 cols <- c("navy", "firebrick")
-(fig6 <- (resid_boxplot +
+(figS10 <- (resid_boxplot +
             scale_color_manual(name = "Sample",
                                breaks = c("In", "Out"),
                                values = cols)) / 
@@ -300,8 +300,8 @@ cols <- c("navy", "firebrick")
       scale_color_manual(name = "Sample",
                            breaks = c("In", "Out"),
                            values = cols)) +
-  plot_annotation(tag_levels = "A"))
+  plot_annotation(tag_levels = "A", tag_prefix = "(", tag_suffix = ")"))
 
-ggsave("fig/ms/fig6.tif", plot = fig6, 
+ggsave("fig/ms/figS10.tif", plot = figS10, 
        width = 173, height = 140, units = "mm", dpi = 500,
        compression = "lzw", device = agg_tiff)

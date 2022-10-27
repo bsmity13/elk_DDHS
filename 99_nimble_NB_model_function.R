@@ -347,7 +347,8 @@ mod_mcmc <- function(chain_list, data, niter, nburn, nthin,
   
   # ... Prep data ----
   nim_dat <- prep_nimble(dat = data, n_beta = 22, rand_seed = rseed,
-                         spatial_effect = TRUE, open_cutoff = oc)
+                         spatial_effect = TRUE, open_cutoff = oc,
+                         open_direction = chain_list$open_direction)
   
   # ... Create model definition ----
   elk <- nimbleModel(code = elk_mod, 

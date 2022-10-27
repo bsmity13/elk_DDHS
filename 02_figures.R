@@ -3,7 +3,7 @@
 #---------------Brian J. Smith--------------X
 #------------------Figures------------------X
 #===========================================X
-#-----------Last update 2022-04-21----------X
+#-----------Last update 2022-10-08----------X
 ############################################X
 
 # For Ecology Letters:
@@ -33,7 +33,6 @@ color_50 <- "black"
 color_80 <- "gray40"
 # 90% credible interval
 color_90 <- "gray70"
-
 
 # ... two color ----
 ## A (orange)
@@ -148,6 +147,8 @@ coda1 <- lapply(samples1, as.mcmc)
 
 gelman.diag(coda1)
 
+write.csv(gelman.diag(coda1)$psrf, "out/gelman_rubin.csv")
+
 # Get coefficients ----
 b <- lapply(samples1, function(x) {
   return(as.data.frame(x[1:nrow(x), 
@@ -251,7 +252,7 @@ quantile(sig, c(0.05, 0.95))
   dev.off()
 }
 
-# # Write all the other parameters in samples1 to a single PDF
+# Write all the other parameters in samples1 to a single PDF
 {
   pdf(file = "fig/trace_other.pdf", onefile = TRUE,
       width = 12, height = 6)
@@ -1040,10 +1041,7 @@ ggsave("fig/ddhs_rough.tiff", plot = rough_ddhs_plot,
        device = agg_tiff)
 
 # ... ... safety ----
-# What's the equivalent of 1 SD along both axes?
-car::dataEllipse(dat$open_orig, dat$rough_orig,
-                 levels = c(0.4, 0.95))
-# 1 SD of openness and roughness
+# 1 SD of openness and roughness (0.5 SD each)
 
 # Openness x1 value
 open_safe_x1 <- 1
@@ -1118,7 +1116,6 @@ ggsave("fig/ddhs_safety.tiff", plot = safe_ddhs_plot,
        width = 6, height = 3, units = "in", compression = "lzw",
        device = agg_tiff)
 
-
 # ... predator density ----
 # Area of *original* NR polygon clipped to inside YNP only
 nr_ynp_m2 <- 994881034 #m2
@@ -1128,7 +1125,6 @@ nr_ynp_km2 <- nr_ynp_m2/1e6
 wa_wd <- 1/(nr_ynp_km2/100)
 
 # ... openness ----
-
 # ... ... wolves ----
 open_wolf_x1 <- create_pred_dat(dat, open = open_x1,
                                 log_dens = quantile(dat$log_dens, 0.5),
@@ -1173,7 +1169,6 @@ for (i in 1:nrow(open_wolf_x1)) {
   open_wolf_x1$q90[i] <- quantile(rss, 0.90)
   open_wolf_x1$q95[i] <- quantile(rss, 0.95)
 }
-
 
 # Plot
 (open_wolf_plot <- ggplot(open_wolf_x1, aes(x = wolf_dens, y = rss)) +
@@ -1408,9 +1403,7 @@ for (i in 1:nrow(b)) {
     pull(rough_orig)
   
   rough_by_wolf[i, ] <- xx
-  
 }
-
 
 rough_wolf_vert <- data.frame(wolf_dens = sort(unique(rough_wolf_alt$wolf_dens))) %>% 
   mutate(q05 = apply(rough_by_wolf, 2, quantile, 0.05),
@@ -1434,8 +1427,6 @@ rough_wolf_vert <- data.frame(wolf_dens = sort(unique(rough_wolf_alt$wolf_dens))
     xlab(expression("Wolf Density" ~ (wolves/100~km^2))) +
     ylab("Roughness vertex (m)") +
     theme_bw())
-
-
 
 # ... ... cougars ----
 rough_cougar_alt <- create_pred_dat(dat, rough = seq(18, 33, length.out = 100),
@@ -1496,17 +1487,6 @@ rough_pred_alt <- rough_wolf_alt_plot + rough_cougar_alt_plot
 ggsave("fig/predator_rough_alt.tiff", plot = rough_pred_alt,
        width = 7, height = 3, units = "in", compression = "lzw",
        device = agg_tiff)
-
-# Driver of habitat use ----
-
-
-# ggsave("fig/driver_by_density.tiff", plot = driver_plot,
-#        width = 5, height = 3, units = "in", compression = "lzw",
-#        device = agg_tiff)
-
-# ggsave("fig/driver_by_density.png", plot = driver_plot,
-#        width = 5, height = 3, units = "in", 
-#        device = agg_png)
 
 # Hypothetical high vs low RSS ----
 # Hold all temporal factors at 2008 values (arbitrary)
@@ -1680,9 +1660,9 @@ map_rss %>%
             min(diff),
             max(diff))
 
-
-
 # Manuscript figures ----
+# ... Figure 1 ----
+# Created in separate project, "Density Prediction Figures"
 
 # ... Figure 2 ----
 fig2 <- cp
@@ -1692,13 +1672,12 @@ ggsave("fig/ms/fig2.tif", plot = fig2,
        compression = "lzw", device = agg_tiff)
 
 # ... Figure 3 ----
-
 fig3 <- 
   (# Top row
     (open_wolf_plot + open_cougar_plot) /
       # Bottom row
       (rough_wolf_alt_plot + rough_cougar_alt_plot)) +
-  plot_annotation(tag_levels = "A")
+  plot_annotation(tag_levels = "A", tag_prefix = "(", tag_suffix = ")")
 
 ggsave("fig/ms/fig3.tif", plot = fig3, device = agg_tiff,
        width = 170, height = 100, units = "mm", dpi = 500,
@@ -1781,18 +1760,82 @@ ggsave("fig/tweet/fig5.png", plot = fig5,
        width = 5, height = 4, units = "in",
        device = agg_png)
 
+# ... Figure S1 ----
+# Study area map
+# Made in QGIS
 
+# ... Figure S2 ----
+# Survey dates and times
+# See data preparation project
 
-# ... Figure 6 ----
-# See script 05_oos_valid.R
+# ... Figure S3 ----
+# Residuals by survey month
+# See script 03_spatio-tempo_corr.R
+
+# ... Figure S4 ----
+# Scale of analysis
+# Made in PowerPoint
+
+# ... Figure S5 ----
+# Openness sensitivity analysis
+# See script 07_open_sens_fig.R
+
+# ... Figure S6 ----
+# Mean effect of SWE, elev, asp
+figS6 <- (
+  (swe_dens_plot) + 
+    (elev_dens_plot +
+       ylab(NULL) +
+       # theme(axis.text.y = element_blank())+
+       NULL) + 
+    (asp_dens_plot +
+       ylab(NULL) +
+       # theme(axis.text.y = element_blank()) +
+       NULL)
+) +
+  plot_annotation(tag_levels = "A", tag_prefix = "(", tag_suffix = ")") +
+  plot_layout(nrow = 1) &
+  coord_cartesian(ylim = c(0, 30))
+
+ggsave("fig/ms/figS6.tif", plot = figS6, device = agg_tiff,
+       width = 170, height = 70, units = "mm", dpi = 500,
+       scale = 1.2, compression = "lzw")
 
 # ... Figure S7 ----
+# Mean effect of (A) biomass, (B) openness, (C) roughness
+figS7 <- (
+  (bio_dens_plot) + 
+    (open_dens_plot +
+       ylab(NULL) +
+       theme(axis.text.y = element_blank())) + 
+    (rough_dens_plot +
+       ylab(NULL) +
+       theme(axis.text.y = element_blank()))) +
+  plot_annotation(tag_levels = "A", tag_prefix = "(", tag_suffix = ")") +
+  plot_layout(nrow = 1) &
+  coord_cartesian(ylim = c(0, 7))
+
+ggsave("fig/ms/figS7.tif", plot = figS7, device = agg_tiff,
+       width = 170, height = 70, units = "mm", dpi = 500,
+       scale = 1.2,
+       compression = "lzw")
+
+# ... Figure S8 ----
+# Roughness RSS
+figS8 <- rough_pred_plot +
+  plot_annotation(tag_levels = "A", tag_prefix = "(", tag_suffix = ")")
+
+ggsave("fig/ms/figS8.tif", plot = figS8, device = agg_tiff,
+       width = 170, height = 70, units = "mm", dpi = 500,
+       scale = 1.2, compression = "lzw")
+
+# ... Figure S9 ----
 # DDHS for roughness compared to openness and biomass
-figS7a <- rough_ddhs_plot +
+figS9a <- rough_ddhs_plot +
   ylab("RSS") +
   coord_cartesian(ylim = c(1.0, 2.0))
 
-figS7b <- driver_sd1 %>% 
+figS9b <- driver_sd1 %>% 
   filter(driver != "safe") %>% 
   ggplot(aes(x = dens, y = rss, color = driver)) +
   geom_line(size = 1) +
@@ -1806,67 +1849,25 @@ figS7b <- driver_sd1 %>%
   theme_bw() +
   theme(axis.text.y = element_blank())
 
-figS7 <- figS7a + figS7b + plot_annotation(tag_levels = "A")
+figS9 <- figS9a + figS9b + 
+  plot_annotation(tag_levels = "A", tag_prefix = "(", tag_suffix = ")")
 
-ggsave("fig/ms/figS7.tif", plot = figS7, device = agg_tiff,
+ggsave("fig/ms/figS9.tif", plot = figS9, device = agg_tiff,
        width = 170, height = 100, units = "mm", dpi = 500,
        scale = 1.2,
        compression = "lzw")
 
-# ... Figure S5 ----
-# Mean effect of (A) biomass, (B) openness, (C) roughness
-figS5 <- (
-  (bio_dens_plot) + 
-    (open_dens_plot +
-       ylab(NULL) +
-       theme(axis.text.y = element_blank())) + 
-    (rough_dens_plot +
-       ylab(NULL) +
-       theme(axis.text.y = element_blank()))) +
-  plot_annotation(tag_levels = "A") +
-  plot_layout(nrow = 1) &
-  coord_cartesian(ylim = c(0, 7))
+# ... Figure S10 ----
+# See script 05_oos_valid.R
 
-ggsave("fig/ms/figS5.tif", plot = figS5, device = agg_tiff,
-       width = 170, height = 70, units = "mm", dpi = 500,
-       scale = 1.2,
-       compression = "lzw")
+# ... Figure S11 ----
+# Residual spatial autocorrelation
+# See script 03_spatio-tempo_corr.R
 
-# ... Figure S4 ----
-# Mean effect of SWE, elev, asp
-
-figS4 <- (
-  (swe_dens_plot) + 
-    (elev_dens_plot +
-       ylab(NULL) +
-       # theme(axis.text.y = element_blank())+
-       NULL) + 
-    (asp_dens_plot +
-       ylab(NULL) +
-       # theme(axis.text.y = element_blank()) +
-       NULL)
-) +
-  plot_annotation(tag_levels = "A") +
-  plot_layout(nrow = 1) &
-  coord_cartesian(ylim = c(0, 30))
-
-ggsave("fig/ms/figS4.tif", plot = figS4, device = agg_tiff,
-       width = 170, height = 70, units = "mm", dpi = 500,
-       scale = 1.2, compression = "lzw")
-
-# ... Figure S6 ----
-# Roughness RSS
-figS6 <- rough_pred_plot +
-  plot_annotation(tag_levels = "A")
-
-ggsave("fig/ms/figS6.tif", plot = figS6, device = agg_tiff,
-       width = 170, height = 70, units = "mm", dpi = 500,
-       scale = 1.2, compression = "lzw")
-
-# ... Figure S9 ----
+# ... Figure S12 ----
 # Trend in eta
 # Temporal random effect
-figS9 <- data.frame(year = years,
+figS12 <- data.frame(year = years,
                     q05 = apply(e, 2, quantile, 0.05),
                     q10 = apply(e, 2, quantile, 0.10),
                     q25 = apply(e, 2, quantile, 0.25),
@@ -1883,13 +1884,13 @@ figS9 <- data.frame(year = years,
   ylab(expression(eta["i, t"])) +
   theme_bw() 
 
-ggsave("fig/ms/figS9.tif", plot = figS9, device = agg_tiff,
+ggsave("fig/ms/figS12.tif", plot = figS12, device = agg_tiff,
        width = 170, height = 70, units = "mm", dpi = 500,
        scale = 1, compression = "lzw")
 
-# ... Figure S10 ----
+# ... Figure S13 ----
 # Supplemental figure with spatial effect
-(figS10 <- s_fig +
+(figS13 <- s_fig +
    geom_sf(data = ynp, aes(geometry = geometry), 
            color = "#DAA520FF", 
            # fill = "#DAA52025", 
@@ -1901,13 +1902,12 @@ ggsave("fig/ms/figS9.tif", plot = figS9, device = agg_tiff,
             datum = 4326) +
    scale_fill_viridis_c(name = expression(s[i]), option = "D") +
    theme_bw())
-ggsave("fig/ms/figS10.tif", plot = figS10, 
+ggsave("fig/ms/figS13.tif", plot = figS13, 
        width = 170, height = 160, units = "mm", dpi = 500,
        compression = "lzw", device = agg_tiff)
 
-# ... Figure S11 ----
+# ... Figure S14 ----
 # Spatial covariance decay
-
 # Distances are scaled by max
 max_dist <- max(dist(unique(dat[, c("x", "y")])))
 
@@ -1915,9 +1915,9 @@ max_dist <- max(dist(unique(dat[, c("x", "y")])))
 expcov <- function(dist, rho, sigma) {
   return(sigma^2 * exp(-1 * dist/rho))
 }
-s11_dat <- data.frame(dist = seq(0, 1.25, length.out = 100))
+s14_dat <- data.frame(dist = seq(0, 1.25, length.out = 100))
 
-s11_dat <- lapply(split(s11_dat, 1:100), function(x) {
+s14_dat <- lapply(split(s14_dat, 1:100), function(x) {
   d <- x$dist
   Sigma <- expcov(d, rho, sig)
   x$q05 <- quantile(Sigma, 0.05)
@@ -1932,7 +1932,7 @@ s11_dat <- lapply(split(s11_dat, 1:100), function(x) {
   bind_rows() %>% 
   mutate(dist_km = dist * max_dist / 1000)
 
-(figS11 <- ggplot(s11_dat, aes(x = dist_km, y = mean)) +
+(figS14 <- ggplot(s14_dat, aes(x = dist_km, y = mean)) +
     geom_ribbon(aes(ymin = q05, ymax = q95), fill = color_90,
                 alpha = 0.5) +
     geom_ribbon(aes(ymin = q10, ymax = q90), fill = color_80,
@@ -1944,11 +1944,11 @@ s11_dat <- lapply(split(s11_dat, 1:100), function(x) {
     ylab(expression(Sigma["i, j"])) +
     theme_bw())
 
-ggsave("fig/ms/figS11.tif", plot = figS11, 
+ggsave("fig/ms/figS14.tif", plot = figS14, 
        width = 170, height = 160, units = "mm", dpi = 500,
        compression = "lzw", device = agg_tiff)
 
-# Fig. S12 ----
+# Figure S15 ----
 # Combined random effects
 
 # Outside?
@@ -1975,7 +1975,7 @@ s_dat_ex <- s_dat %>%
     TRUE ~ NA_real_
   ))
 
-figS12 <- ggplot() +
+figS15 <- ggplot() +
   geom_raster(data = s_dat_ex, aes(x = x, y = y, fill = comb)) +
   facet_wrap(~ year) +
   scale_fill_viridis_c(name = "Total\nRandom\nEffect") +
@@ -1984,6 +1984,11 @@ figS12 <- ggplot() +
   coord_sf(crs = 26912) +
   theme_bw()
 
-ggsave("fig/ms/figS12.tif", plot = figS12, 
+ggsave("fig/ms/figS15.tif", plot = figS15, 
        width = 170, height = 160, units = "mm", dpi = 500,
        compression = "lzw", device = agg_tiff)
+
+# Figure S16 ----
+# Cougar densities
+# Created in data preparation project
+# See 06_predators.R in that project

@@ -3,7 +3,7 @@
 #---------------Brian J. Smith--------------X
 #--------Openness Sensitivity Figures-------X
 #===========================================X
-#-----------Last update 2022-06-22----------X
+#-----------Last update 2022-10-08----------X
 ############################################X
 
 #Load packages----
@@ -55,25 +55,63 @@ years <- sort(unique(dat$year))
 # Scaling data.frame
 scale_df <- read.csv("data/scale_df.csv")
 
+# SDs
+# 0.5 SD of openness and roughness
+bio_sd <- scale_df %>% 
+  filter(term == "biomass") %>% 
+  pull(sd)
+
+# Openness
+open_sd <- scale_df %>% 
+  filter(term == "open") %>% 
+  pull(sd)
+
+# Roughness
+rough_sd <- scale_df %>% 
+  filter(term == "rough") %>% 
+  pull(sd)
+
 # Openness cutoffs ----
 (oc1 <- unname(quantile(dat$open_orig, 0.05)))
 (oc2 <- unname(quantile(dat$open_orig, 0.10)))
 
 (oc1 <- 0.30)
 (oc2 <- 0.50)
+(oc3 <- 0.9999)
 
+# ... histogram ----
 open_hist <- dat %>% 
   ggplot() +
   geom_histogram(aes(x = open_orig), bins = 50,
                  color = "black") +
+  # OC1
   geom_vline(xintercept = oc1, size = 1,
              color = "firebrick", linetype = "dashed") +
+  # geom_segment(aes(x = oc1, xend = oc1 - 0.1, y = 3000, yend = 3000),
+  #              color = "firebrick", 
+  #              arrow = arrow(length = unit(0.1, "inches"),
+  #                            type = "closed")) +
+  # OC2
   geom_vline(xintercept = oc2, size = 1,
              color = "blue", linetype = "dashed") +
-  xlab("Openness (%)") +
-  ylab("Count") +
-  coord_cartesian(xlim = c(0, 1)) +
+  # geom_segment(aes(x = oc2, xend = oc2 - 0.1, y = 3000, yend = 3000),
+  #              color = "blue", 
+  #              arrow = arrow(length = unit(0.1, "inches"),
+  #                            type = "closed")) +
+  # OC3
+  geom_vline(xintercept = oc3, size = 1,
+             color = "#00BB00", linetype = "dashed") +
+  # geom_segment(aes(x = oc3, xend = oc3 + 0.05, y = 3000, yend = 3000),
+  #              color = "#00BB00", 
+  #              arrow = arrow(length = unit(0.1, "inches"),
+  #                            type = "closed")) +
+  scale_x_continuous(name = "Openness (%)",
+                     breaks = seq(0, 1, length.out = 5),
+                     labels = seq(0, 100, length.out = 5)) +
+  ylab("Number of Pixels") +
+  coord_cartesian(xlim = c(0, 1.05)) +
   theme_bw() +
+  theme(axis.title = element_text(size = 10)) +
   NULL
 
 ggsave("fig/open_sens/open_hist.tiff", plot = open_hist, width = 8, height = 6, 
@@ -83,10 +121,12 @@ ggsave("fig/open_sens/open_hist.tiff", plot = open_hist, width = 8, height = 6,
 ncell <- length(unique(dat$cell))
 flagged_oc1 <- sort(unique(dat$cell[which(dat$open_orig < oc1)]))
 flagged_oc2 <- sort(unique(dat$cell[which(dat$open_orig < oc2)]))
+flagged_oc3 <- sort(unique(dat$cell[which(dat$open_orig > oc3)]))
 
 # Proportion remaining
 round(prop_oc1 <- (ncell - length(flagged_oc1))/ncell, 3)
 round(prop_oc2 <- (ncell - length(flagged_oc2))/ncell, 3)
+round(prop_oc3 <- (ncell - length(flagged_oc3))/ncell, 3)
 
 # MCMC samples ----
 # Note: the model runs are added to .gitignore, so are not available
@@ -170,6 +210,29 @@ samples2_oc2 <- lapply(samples2_oc2, function(x) {
 # Garbage cleanup
 gc()
 
+# ... openness cutoff 3 ----
+samples1_oc3 <- list(
+  ch1 = readRDS("models/sens/samples1_ch_oc3_1_2022-09-23.rds"),
+  ch2 = readRDS("models/sens/samples1_ch_oc3_2_2022-09-23.rds")
+)
+
+samples2_oc3 <- list(
+  ch1 = readRDS("models/sens/samples2_ch_oc3_1_2022-09-23.rds"),
+  ch2 = readRDS("models/sens/samples2_ch_oc3_2_2022-09-23.rds")
+)
+
+# Get rid of burn-in and thin
+# Want to leave 4k samples for inference (same as original)
+# Burn-in of 22k (samplers adapt for 15k)
+# Thinning by 7 leaves 4k samples for inference
+samples1_oc3 <- lapply(samples1_oc3, function(x) {
+  return(x[seq(22007, nrow(x), by = 7),])
+})
+
+samples2_oc3 <- lapply(samples2_oc3, function(x) {
+  return(x[seq(22007, nrow(x), by = 7),])
+})
+
 # Create figure directories ----
 # Adding figures to .gitignore, so directory will not exist in cloned repos
 dir.create("fig", showWarnings = FALSE)
@@ -183,6 +246,10 @@ gelman.diag(coda1_oc1)
 coda1_oc2 <- lapply(samples1_oc2, as.mcmc)
 
 gelman.diag(coda1_oc2)
+
+coda1_oc3 <- lapply(samples1_oc3, as.mcmc)
+
+gelman.diag(coda1_oc3)
 
 # Plot coefficients ----
 # ... original data ----
@@ -211,6 +278,15 @@ b_oc2 <- lapply(samples1_oc2, function(x) {
   bind_rows() %>% 
   as.data.frame()
 names(b_oc2) <- paste0("b", 1:ncol(b_oc2))
+
+# ... open cutoff 3 ----
+b_oc3 <- lapply(samples1_oc3, function(x) {
+  return(as.data.frame(x[1:nrow(x), 
+                         grep("beta", colnames(samples1_oc3[[1]]))]))
+}) %>% 
+  bind_rows() %>% 
+  as.data.frame()
+names(b_oc3) <- paste0("b", 1:ncol(b_oc3))
 
 # ... count coefficients ----
 beta_data <- function(b) {
@@ -259,13 +335,15 @@ beta_data <- function(b) {
 bd_orig <- beta_data(b_orig)
 bd_oc1 <- beta_data(b_oc1)
 bd_oc2 <- beta_data(b_oc2)
+bd_oc3 <- beta_data(b_oc3)
 
 bd <- bind_rows("Original" = bd_orig, 
-                ">30% Open" = bd_oc1,
-                ">50% Open" = bd_oc2, 
+                "> 30% Open" = bd_oc1,
+                "> 50% Open" = bd_oc2, 
+                "< 99.9% Open" = bd_oc3, 
                 .id = "cutoff") %>% 
-  mutate(cutoff = factor(cutoff, levels = c("Original", ">30% Open", 
-                                            ">50% Open")))
+  mutate(cutoff = factor(cutoff, levels = c("Original", "> 30% Open", 
+                                            "> 50% Open", "< 99.9% Open")))
 
 cp <- bd %>% 
   ggplot(aes(y = order, x = mean)) +
@@ -289,12 +367,15 @@ ggsave("fig/open_sens/betas.tiff", plot = cp, width = 8, height = 6,
 # ... difference from orig ----
 diff_oc1 <- beta_data(b_orig - b_oc1)
 diff_oc2 <- beta_data(b_orig - b_oc2)
+diff_oc3 <- beta_data(b_orig - b_oc3)
 
-b_diff <- bind_rows(">30% Open" = diff_oc1,
-                    ">50% Open" = diff_oc2, 
+b_diff <- bind_rows("> 30% Open" = diff_oc1,
+                    "> 50% Open" = diff_oc2,
+                    "< 99.9% Open" = diff_oc3, 
                     .id = "cutoff") %>% 
-  mutate(cutoff = factor(cutoff, levels = c(">30% Open", 
-                                            ">50% Open")))
+  mutate(cutoff = factor(cutoff, levels = c("> 30% Open", 
+                                            "> 50% Open",
+                                            "< 99.9% Open")))
 
 p_diff <- b_diff %>% 
   ggplot(aes(y = order, x = mean)) +
@@ -343,6 +424,7 @@ bio_dens$q05 <- bio_dens$q10 <- bio_dens$q25 <-
 bio_dens_oc <- bind_rows("orig" = bio_dens,
                          "oc1" = bio_dens,
                          "oc2" = bio_dens,
+                         "oc3" = bio_dens,
                          .id = "oc")
 
 for (i in 1:nrow(bio_dens_oc)) {
@@ -376,8 +458,9 @@ for (i in 1:nrow(bio_dens_oc)) {
     xlab("Biomass (kg/ha)") +
     ylab(expression("Expected Density" ~ (elk/km^2))) +
     scale_color_discrete(name = "Openness Cutoff",
-                         breaks = c("orig", "oc1", "oc2"),
-                         labels = c("Original", ">30% Open", ">50% Open")) +
+                         breaks = c("orig", "oc1", "oc2", "oc3"),
+                         labels = c("Original", "> 30% Open", 
+                                    "> 50% Open", "< 99.9% Open")) +
     theme_bw())
 ggsave("fig/open_sens/density_biomass.tiff", plot = bio_dens_plot,
        width = 7, height = 4, units = "in", compression = "lzw",
@@ -400,6 +483,7 @@ open_dens$q05 <- open_dens$q10 <- open_dens$q25 <-
 open_dens_oc <- bind_rows("orig" = open_dens,
                           "oc1" = open_dens,
                           "oc2" = open_dens,
+                          "oc3" = open_dens,
                           .id = "oc")
 
 for (i in 1:nrow(open_dens_oc)) {
@@ -436,8 +520,9 @@ for (i in 1:nrow(open_dens_oc)) {
     ylab(expression("Expected Density" ~ (elk/km^2))) +
     coord_cartesian(ylim = c(0, 20)) +
     scale_color_discrete(name = "Openness Cutoff",
-                         breaks = c("orig", "oc1", "oc2"),
-                         labels = c("Original", ">30% Open", ">50% Open")) +
+                         breaks = c("orig", "oc1", "oc2", "oc3"),
+                         labels = c("Original", "> 30% Open", 
+                                    "> 50% Open", "< 99.9% Open")) +
     theme_bw())
 
 ggsave("fig/open_sens/density_open.tiff", plot = open_dens_plot,
@@ -462,6 +547,7 @@ rough_dens$q05 <- rough_dens$q10 <- rough_dens$q25 <-
 rough_dens_oc <- bind_rows("orig" = rough_dens,
                            "oc1" = rough_dens,
                            "oc2" = rough_dens,
+                           "oc3" = rough_dens,
                            .id = "oc")
 
 for (i in 1:nrow(rough_dens_oc)) {
@@ -497,8 +583,9 @@ for (i in 1:nrow(rough_dens_oc)) {
     xlab("Roughness (m)") +
     ylab(expression("Expected Density" ~ (elk/km^2))) +
     scale_color_discrete(name = "Openness Cutoff",
-                         breaks = c("orig", "oc1", "oc2"),
-                         labels = c("Original", ">30% Open", ">50% Open")) +
+                         breaks = c("orig", "oc1", "oc2", "oc3"),
+                         labels = c("Original", "> 30% Open", 
+                                    "> 50% Open", "< 99.9% Open")) +
     theme_bw())
 
 ggsave("fig/open_sens/density_rough.tiff", plot = rough_dens_plot,
@@ -542,11 +629,13 @@ bio_ddhs_x1$q05 <- bio_ddhs_x1$q10 <- bio_ddhs_x1$q25 <-
 bio_ddhs_x1_oc <- bind_rows("orig" = bio_ddhs_x1,
                             "oc1" = bio_ddhs_x1,
                             "oc2" = bio_ddhs_x1,
+                            "oc3" = bio_ddhs_x1,
                             .id = "oc")
 
 bio_ddhs_x2_oc <- bind_rows("orig" = bio_ddhs_x2,
                             "oc1" = bio_ddhs_x2,
                             "oc2" = bio_ddhs_x2,
+                            "oc3" = bio_ddhs_x2,
                             .id = "oc")
 
 for (i in 1:nrow(bio_ddhs_x1_oc)) {
@@ -588,8 +677,9 @@ for (i in 1:nrow(bio_ddhs_x1_oc)) {
     ylab("RSS for Food (Biomass)") +
     coord_cartesian(ylim = c(1, 3)) +
     scale_color_discrete(name = "Openness Cutoff",
-                         breaks = c("orig", "oc1", "oc2"),
-                         labels = c("Original", ">30% Open", ">50% Open")) +
+                         breaks = c("orig", "oc1", "oc2", "oc3"),
+                         labels = c("Original", "> 30% Open", 
+                                    "> 50% Open", "< 99.9% Open")) +
     theme_bw())
 
 ggsave("fig/open_sens/ddhs_biomass.tiff", plot = bio_ddhs_plot,
@@ -622,11 +712,13 @@ open_ddhs_x1$q05 <- open_ddhs_x1$q10 <- open_ddhs_x1$q25 <-
 open_ddhs_x1_oc <- bind_rows("orig" = open_ddhs_x1,
                              "oc1" = open_ddhs_x1,
                              "oc2" = open_ddhs_x1,
+                             "oc3" = open_ddhs_x1,
                              .id = "oc")
 
 open_ddhs_x2_oc <- bind_rows("orig" = open_ddhs_x2,
                              "oc1" = open_ddhs_x2,
                              "oc2" = open_ddhs_x2,
+                             "oc3" = open_ddhs_x2,
                              .id = "oc")
 
 for (i in 1:nrow(open_ddhs_x1_oc)) {
@@ -667,8 +759,9 @@ for (i in 1:nrow(open_ddhs_x1_oc)) {
     xlab(expression("Average Elk Density" ~ (elk/km^2))) +
     ylab("RSS for Openness") +
     scale_color_discrete(name = "Openness Cutoff",
-                         breaks = c("orig", "oc1", "oc2"),
-                         labels = c("Original", ">30% Open", ">50% Open")) +
+                         breaks = c("orig", "oc1", "oc2", "oc3"),
+                         labels = c("Original", "> 30% Open", 
+                                    "> 50% Open", "< 99.9% Open")) +
     theme_bw())
 
 ggsave("fig/open_sens/ddhs_open.tiff", plot = open_ddhs_plot,
@@ -701,11 +794,13 @@ rough_ddhs_x1$q05 <- rough_ddhs_x1$q10 <- rough_ddhs_x1$q25 <-
 rough_ddhs_x1_oc <- bind_rows("orig" = rough_ddhs_x1,
                               "oc1" = rough_ddhs_x1,
                               "oc2" = rough_ddhs_x1,
+                              "oc3" = rough_ddhs_x1,
                               .id = "oc")
 
 rough_ddhs_x2_oc <- bind_rows("orig" = rough_ddhs_x2,
                               "oc1" = rough_ddhs_x2,
                               "oc2" = rough_ddhs_x2,
+                              "oc3" = rough_ddhs_x2,
                               .id = "oc")
 
 for (i in 1:nrow(rough_ddhs_x1_oc)) {
@@ -746,8 +841,9 @@ for (i in 1:nrow(rough_ddhs_x1_oc)) {
     xlab(expression("Average Elk Density" ~ (elk/km^2))) +
     ylab("RSS for Roughness") +
     scale_color_discrete(name = "Openness Cutoff",
-                         breaks = c("orig", "oc1", "oc2"),
-                         labels = c("Original", ">30% Open", ">50% Open")) +
+                         breaks = c("orig", "oc1", "oc2", "oc3"),
+                         labels = c("Original", "> 30% Open", 
+                                    "> 50% Open", "< 99.9% Open")) +
     theme_bw())
 
 ggsave("fig/open_sens/ddhs_rough.tiff", plot = rough_ddhs_plot,
@@ -794,11 +890,13 @@ open_wolf_x1$q05 <- open_wolf_x1$q10 <- open_wolf_x1$q25 <-
 open_wolf_x1_oc <- bind_rows("orig" = open_wolf_x1,
                              "oc1" = open_wolf_x1,
                              "oc2" = open_wolf_x1,
+                             "oc3" = open_wolf_x1,
                              .id = "oc")
 
 open_wolf_x2_oc <- bind_rows("orig" = open_wolf_x2,
                              "oc1" = open_wolf_x2,
                              "oc2" = open_wolf_x2,
+                             "oc3" = open_wolf_x2,
                              .id = "oc")
 
 for (i in 1:nrow(open_wolf_x1_oc)) {
@@ -837,12 +935,13 @@ for (i in 1:nrow(open_wolf_x1_oc)) {
     # geom_ribbon(aes(ymin = q25, ymax = q75), fill = color_50,
     #             alpha = 0.5) +
     geom_line() +
-    coord_cartesian(ylim = c(0, 5)) +
+    coord_cartesian(ylim = c(0, 7)) +
     xlab(expression("Wolf Density" ~ (wolves/100~km^2))) +
     ylab("RSS for Openness") +
     scale_color_discrete(name = "Openness Cutoff",
-                         breaks = c("orig", "oc1", "oc2"),
-                         labels = c("Original", ">30% Open", ">50% Open")) +
+                         breaks = c("orig", "oc1", "oc2", "oc3"),
+                         labels = c("Original", "> 30% Open", 
+                                    "> 50% Open", "< 99.9% Open")) +
     theme_bw())
 
 # ... ... cougars ----
@@ -873,11 +972,13 @@ open_cougar_x1$q05 <- open_cougar_x1$q10 <- open_cougar_x1$q25 <-
 open_cougar_x1_oc <- bind_rows("orig" = open_cougar_x1,
                                "oc1" = open_cougar_x1,
                                "oc2" = open_cougar_x1,
+                               "oc3" = open_cougar_x1,
                                .id = "oc")
 
 open_cougar_x2_oc <- bind_rows("orig" = open_cougar_x2,
                                "oc1" = open_cougar_x2,
                                "oc2" = open_cougar_x2,
+                               "oc3" = open_cougar_x2,
                                .id = "oc")
 
 for (i in 1:nrow(open_cougar_x1_oc)) {
@@ -915,13 +1016,14 @@ for (i in 1:nrow(open_cougar_x1_oc)) {
     # geom_ribbon(aes(ymin = q25, ymax = q75), fill = color_50,
     #             alpha = 0.5) +
     geom_line() +
-    coord_cartesian(ylim = c(0, 5)) +
+    coord_cartesian(ylim = c(0, 7)) +
     xlab(expression("Cougar Density" ~ (cougars/100~km^2))) +
     # ylab("RSS for Openness") +
     ylab(NULL) +
     scale_color_discrete(name = "Openness Cutoff",
-                         breaks = c("orig", "oc1", "oc2"),
-                         labels = c("Original", ">30% Open", ">50% Open")) +
+                         breaks = c("orig", "oc1", "oc2", "oc3"),
+                         labels = c("Original", "> 30% Open", 
+                                    "> 50% Open", "< 99.9% Open")) +
     theme_bw())
 
 # ... ... combine ----
@@ -963,11 +1065,13 @@ rough_wolf_x1$q05 <- rough_wolf_x1$q10 <- rough_wolf_x1$q25 <-
 rough_wolf_x1_oc <- bind_rows("orig" = rough_wolf_x1,
                               "oc1" = rough_wolf_x1,
                               "oc2" = rough_wolf_x1,
+                              "oc3" = rough_wolf_x1,
                               .id = "oc")
 
 rough_wolf_x2_oc <- bind_rows("orig" = rough_wolf_x2,
                               "oc1" = rough_wolf_x2,
                               "oc2" = rough_wolf_x2,
+                              "oc3" = rough_wolf_x2,
                               .id = "oc")
 
 for (i in 1:nrow(rough_wolf_x1_oc)) {
@@ -1009,8 +1113,9 @@ for (i in 1:nrow(rough_wolf_x1_oc)) {
     xlab(expression("Wolf Density" ~ (wolves/100~km^2))) +
     ylab("RSS for Roughness") +
     scale_color_discrete(name = "Openness Cutoff",
-                         breaks = c("orig", "oc1", "oc2"),
-                         labels = c("Original", ">30% Open", ">50% Open")) +
+                         breaks = c("orig", "oc1", "oc2", "oc3"),
+                         labels = c("Original", "> 30% Open", 
+                                    "> 50% Open", "< 99.9% Open")) +
     theme_bw())
 
 # ... ... cougars ----
@@ -1041,11 +1146,13 @@ rough_cougar_x1$q05 <- rough_cougar_x1$q10 <- rough_cougar_x1$q25 <-
 rough_cougar_x1_oc <- bind_rows("orig" = rough_cougar_x1,
                                 "oc1" = rough_cougar_x1,
                                 "oc2" = rough_cougar_x1,
+                                "oc3" = rough_cougar_x1,
                                 .id = "oc")
 
 rough_cougar_x2_oc <- bind_rows("orig" = rough_cougar_x2,
                                 "oc1" = rough_cougar_x2,
                                 "oc2" = rough_cougar_x2,
+                                "oc3" = rough_cougar_x2,
                                 .id = "oc")
 
 for (i in 1:nrow(rough_cougar_x1_oc)) {
@@ -1088,8 +1195,9 @@ for (i in 1:nrow(rough_cougar_x1_oc)) {
     # ylab("RSS for Roughness") +
     ylab(NULL) +
     scale_color_discrete(name = "Openness Cutoff",
-                         breaks = c("orig", "oc1", "oc2"),
-                         labels = c("Original", ">30% Open", ">50% Open")) +
+                         breaks = c("orig", "oc1", "oc2", "oc3"),
+                         labels = c("Original", "> 30% Open", 
+                                    "> 50% Open", "< 99.9% Open")) +
     theme_bw())
 
 # ... ... combine ----
@@ -1101,21 +1209,6 @@ ggsave("fig/open_sens/predator_rough.tiff", plot = rough_pred_plot,
        device = agg_tiff)
 
 # Main result figure ----
-
-# 0.5 SD of openness and roughness
-bio_sd <- scale_df %>% 
-  filter(term == "biomass") %>% 
-  pull(sd)
-
-# Openness
-open_sd <- scale_df %>% 
-  filter(term == "open") %>% 
-  pull(sd)
-
-# Roughness
-rough_sd <- scale_df %>% 
-  filter(term == "rough") %>% 
-  pull(sd)
 
 # Openness x1 value
 open_safe_x1 <- 1
@@ -1158,11 +1251,13 @@ safe_ddhs_x1$q05 <- safe_ddhs_x1$q10 <- safe_ddhs_x1$q25 <-
 safe_ddhs_x1_oc <- bind_rows("orig" = safe_ddhs_x1,
                              "oc1" = safe_ddhs_x1,
                              "oc2" = safe_ddhs_x1,
+                             "oc3" = safe_ddhs_x1,
                              .id = "oc")
 
 safe_ddhs_x2_oc <- bind_rows("orig" = safe_ddhs_x2,
                              "oc1" = safe_ddhs_x2,
                              "oc2" = safe_ddhs_x2,
+                             "oc3" = safe_ddhs_x2,
                              .id = "oc")
 
 for (i in 1:nrow(safe_ddhs_x1_oc)) {
@@ -1205,15 +1300,16 @@ for (i in 1:nrow(safe_ddhs_x1_oc)) {
     xlab(expression("Elk Density" ~ (elk/km^2))) +
     ylab("RSS for Safety") +
     scale_color_discrete(name = "Openness Cutoff",
-                         breaks = c("orig", "oc1", "oc2"),
-                         labels = c("Original", ">30% Open", ">50% Open")) +
+                         breaks = c("orig", "oc1", "oc2", "oc3"),
+                         labels = c("Original", "> 30% Open", 
+                                    "> 50% Open", "< 99.9% Open")) +
     theme_bw())
 
 ggsave("fig/open_sens/ddhs_safety.tiff", plot = safe_ddhs_plot,
        width = 6, height = 3, units = "in", compression = "lzw",
        device = agg_tiff)
 
-# Figure S3 ----
+# Figure S5 ----
 # Split calculations with OCs together into 30% and 50%
 food_safe_30 <- bind_rows(bio = bio_ddhs_x1_oc,
                           safe = safe_ddhs_x1_oc,
@@ -1263,9 +1359,35 @@ food_safe_50 <- bind_rows(bio = bio_ddhs_x1_oc,
   filter(level_upr == level_lwr) %>% 
   mutate(driver_level = paste(driver, level_upr, sep = "_"))
 
-S3A <- open_hist
+food_safe_99 <- bind_rows(bio = bio_ddhs_x1_oc,
+                          safe = safe_ddhs_x1_oc,
+                          .id = "driver") %>% 
+  filter(oc == "oc3") %>% 
+  dplyr::select(driver, dens, rss, q95:q05) %>% 
+  pivot_longer(cols = c(q95:q75), 
+               names_to = "quantile_upr", values_to = "upr") %>% 
+  pivot_longer(cols = c(q25:q05), 
+               names_to = "quantile_lwr", values_to = "lwr") %>% 
+  mutate(level_upr = case_when(
+    quantile_upr == "q95" ~ "90%",
+    quantile_upr == "q90" ~ "80%",
+    quantile_upr == "q75" ~ "50%",
+    TRUE ~ NA_character_
+  ),
+  level_lwr = case_when(
+    quantile_lwr == "q05" ~ "90%",
+    quantile_lwr == "q10" ~ "80%",
+    quantile_lwr == "q25" ~ "50%",
+    TRUE ~ NA_character_
+  )) %>% 
+  filter(level_upr == level_lwr) %>% 
+  mutate(driver_level = paste(driver, level_upr, sep = "_"))
 
-(S3B <- food_safe_30 %>% 
+# ... S5A ----
+S5A <- open_hist
+
+# ... S5B ----
+(S5B <- food_safe_30 %>% 
     ggplot(aes(x = dens, y = rss, 
                color = driver, fill = driver_level)) +
     geom_ribbon(aes(ymin = lwr, ymax = upr),
@@ -1283,9 +1405,13 @@ S3A <- open_hist
     xlab(expression("Average Elk Density" ~ (elk/km^2))) +
     ylab("RSS") +
     coord_cartesian(ylim = c(1.2, 2.8)) +
-    theme_bw())
+    ggtitle("> 30% Open") +
+    theme_bw() +
+    theme(axis.title.x = element_blank(),
+          plot.title = element_text(size = 8)))
 
-(S3C <- food_safe_50 %>% 
+# ... S5C ----
+(S5C <- food_safe_50 %>% 
     ggplot(aes(x = dens, y = rss, 
                color = driver, fill = driver_level)) +
     geom_ribbon(aes(ymin = lwr, ymax = upr),
@@ -1300,15 +1426,48 @@ S3A <- open_hist
                                  "open_90%", "open_80%", "open_50%"),
                       values = c(color_a_90, color_a_80, color_a_50,
                                  color_b_90, color_b_80, color_b_50)) +
-    xlab(expression("Average Elk Density" ~ (elk/km^2))) +
+    xlab("Average Elk Density") +
     ylab("RSS") +
     coord_cartesian(ylim = c(1.2, 2.8)) +
-    theme_bw())
+    ggtitle("> 50% Open") +
+    theme_bw() +
+    theme(axis.title.x = element_text(size = 10, hjust = 1),
+          axis.title.y = element_blank(),
+          axis.text.y = element_blank(),
+          plot.title = element_text(size = 8)))
 
-figS3 <- S3A / (S3B + S3C) +
-  plot_annotation(tag_levels = "A") +
+# ... S5D ----
+(S5D <- food_safe_99 %>% 
+    ggplot(aes(x = dens, y = rss, 
+               color = driver, fill = driver_level)) +
+    geom_ribbon(aes(ymin = lwr, ymax = upr),
+                alpha = 0.2, show.legend = FALSE, color = NA) +
+    geom_line(size = 0.7) +
+    scale_color_manual(name = "Habitat Variable",
+                       breaks = c("bio", "safe"),
+                       labels = c("Food", "Safety"),
+                       values = c(color_a, color_b)) +
+    scale_fill_manual(name = "Habitat Variable",
+                      breaks = c("bio_90%", "bio_80%", "bio_50%",
+                                 "open_90%", "open_80%", "open_50%"),
+                      values = c(color_a_90, color_a_80, color_a_50,
+                                 color_b_90, color_b_80, color_b_50)) +
+    xlab(expression((elk/km^2))) +
+    ylab("RSS") +
+    coord_cartesian(ylim = c(1.2, 2.8)) +
+    ggtitle("< 99.9% Open") +
+    theme_bw() +
+    theme(axis.title.x = element_text(size = 10, hjust = -0.75),
+          axis.title.y = element_blank(),
+          axis.text.y = element_blank(),
+          plot.title = element_text(size = 8)))
+
+# ... combine ----
+figS5 <- S5A / (S5B + S5C + S5D) +
+  plot_annotation(tag_levels = "A", tag_prefix = "(", tag_suffix = ")") +
   plot_layout(guides = "collect")
 
-ggsave("fig/ms/figS3.tif", plot = figS3, device = agg_tiff,
+ggsave("fig/ms/figS5.tif", plot = figS5, device = agg_tiff,
        width = 173, height = 130, units = "mm", dpi = 500,
        compression = "lzw")
+

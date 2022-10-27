@@ -3,7 +3,7 @@
 #---------------Brian J. Smith--------------X
 #------------Openness Sensitivity-----------X
 #===========================================X
-#-----------Last update 2022-04-22----------X
+#-----------Last update 2022-09-21----------X
 ############################################X
 
 # Load packages ----
@@ -24,33 +24,41 @@ dat <- read.csv("data/all_data.csv")
 hist(dat$open_orig)
 # (oc1 <- unname(quantile(dat$open_orig, 0.25)))
 # (oc2 <- unname(quantile(dat$open_orig, 0.50)))
+# (oc3 <- unname(quantile(dat$open_orig, 0.99)))
 
 (oc1 <- 0.30)
 (oc2 <- 0.50)
+(oc3 <- 0.9999)
 
 # Source model functions ----
 source("99_nimble_NB_model_function.R")
 
 # List of models to fit ----
 # Seeds are different to each other AND different from original model fit
-chain_list <- list(list(chain = "_oc1_1",
-                        seed = 112233,
-                        open_cutoff = oc1),
-                   list(chain = "_oc1_2",
-                        seed = 445566,
-                        open_cutoff = oc1),
-                   # list(chain = "_oc1_3",
-                   #      seed = 778899,
-                   #      open_cutoff = oc1),
-                   list(chain = "_oc2_1", 
-                        seed = 101112,
-                        open_cutoff = oc2),
-                   list(chain = "_oc2_2", 
-                        seed = 131415,
-                        open_cutoff = oc2)#,
-                   # list(chain = "_oc2_3", 
-                   #      seed = 161718,
-                   #      open_cutoff = oc2)
+chain_list <- list(#list(chain = "_oc1_1",
+#                         seed = 112233,
+#                         open_cutoff = oc1,
+#                         open_direction = "less"),
+#                    list(chain = "_oc1_2",
+#                         seed = 445566,
+#                         open_cutoff = oc1,
+#                         open_direction = "less"),
+#                    list(chain = "_oc2_1", 
+#                         seed = 101112,
+#                         open_cutoff = oc2,
+#                         open_direction = "less"),
+#                    list(chain = "_oc2_2", 
+#                         seed = 131415,
+#                         open_cutoff = oc2,
+#                         open_direction = "less"),
+                   list(chain = "_oc3_1", 
+                        seed = 161718,
+                        open_cutoff = oc3,
+                        open_direction = "greater"),
+                   list(chain = "_oc3_2", 
+                        seed = 192021,
+                        open_cutoff = oc3,
+                        open_direction = "greater")
                    )
 
 # Start cluster ----
@@ -97,7 +105,7 @@ time_df$diff_h <- c(NA, total.time)
 
 #Store MCMC parameters for timing
 time_df$param <- c("niter", "nchains")
-time_df$val <- c(niter, 4)
+time_df$val <- c(niter, 6)
 
 write.csv(time_df, "open_timing.csv", row.names = FALSE)
 

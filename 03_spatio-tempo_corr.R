@@ -1,9 +1,9 @@
 ############################################X
 #--Elk Density-Dependent Habitat Selection--X
 #---------------Brian J. Smith--------------X
-#------Residual Spatial Autocorrelation-----X
+#--Residual Spatio-temporal Autocorrelation-X
 #===========================================X
-#-----------Last update 2022-02-22----------X
+#-----------Last update 2022-09-21----------X
 ############################################X
 
 #Load packages----
@@ -21,6 +21,8 @@ source("99_fun.R")
 dat <- read.csv("data/all_data.csv")
 #Times
 years <- sort(unique(dat$year))
+# Date summary
+dates <- readRDS("../Elk_Dens_Data/out/dates_summary.rds")
 
 # MCMC samples ----
 samples1 <- list(
@@ -81,7 +83,7 @@ s <- lapply(samples2, function(x) {
   as.data.frame()
 names(s) <- paste0("s", 1:ncol(s))
 
-# Plot residual maps ----
+# Calculate residuals ----
 pred <- dat
 pred$lambda <- NA
 pred$lwr <- NA
@@ -106,6 +108,46 @@ for (i in 1:nrow(pred)) {
 pred$resid <- pred$n - pred$lambda
 # Pearson residual
 pred$pearson <- pred$resid/sqrt(pred$var)
+
+# Temporal correlation ----
+# Does date of survey affect residuals?
+
+# Join dates to data
+pred <- left_join(pred, dates, by = c("year" = "winter"))
+
+# ... Figure S3 ----
+(resid_temp <- pred %>% 
+  ggplot(aes(x = mean_date, y = resid)) +
+  geom_point(size = 1, alpha = 0.3) +
+  geom_smooth(method = "gam", se = TRUE) +
+  xlab("Survey Date") +
+  ylab("Ordinary Residuals") +
+  theme_bw())
+
+ggsave("fig/ms/figS3.tiff", plot = resid_temp, device = agg_tiff,
+       width = 170, height = 100, units = "mm", dpi = 500,
+       scale = 1.2,
+       compression = "lzw")
+
+# Model
+pred <- pred %>% 
+  mutate(yday = lubridate::yday(mean_date)) %>% 
+  mutate(yday_adj = case_when(
+    yday > 200 ~ yday - 365,
+    TRUE ~ yday
+  ))
+
+date_mod <- aov(pearson ~ factor(yday), data = pred)
+summary(date_mod)
+hsd <- TukeyHSD(date_mod)
+range(hsd$`factor(yday)`[,"p adj"])
+
+# Write output to table
+hsd_df <- as.data.frame(hsd$`factor(yday)`)
+hsd_df$comp <- paste0("'", row.names(hsd_df))
+write.csv(hsd_df, "out/TableS2.csv", row.names = FALSE)
+
+# Plot residual maps ----
 
 plot_resid <- function(pred, yr){
   # Subset data.frame
@@ -173,7 +215,7 @@ for (i in 1:length(years)){
 }
 
 {
-  tiff("fig/ms/figS8.tiff",
+  tiff("fig/ms/figS11.tiff",
       width = 173, height = 200, units = "mm", res = 300,
       compression = "lzw")
   par(mfrow = c(4, 4), cex = 0.5)
