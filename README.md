@@ -17,9 +17,19 @@ Resubmitted to *Ecology Letters* after addressing peer review on October 26, 202
 
 ## About Repository
 
-Repository version 0.2 -- First revision
+### Versions 
+
+#### Repository version 0.1 -- Prior to peer review
+
+This release (v0.1) was created before publishing preprint and before peer-review. The repository is archived here:
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6687905.svg)](https://doi.org/10.5281/zenodo.6687905)
+
+#### Repository version 0.2 -- First revision
+
+This release (v0.2) was created in response to peer review and contains all data and code used in the resubmission. This repository will now be archived and an updated link will be posted here.
+
+### Overview
 
 This repository contains the processed data and code needed to fit the model described in the manuscript. The models are fit using MCMC in R with the package `nimble`. The posterior samples are stored in directory `models/`, but they are almost 3 GB in total. 
 
