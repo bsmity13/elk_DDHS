@@ -43,7 +43,7 @@ This release (v0.2) was created in response to peer review and contains all data
 
 This release (v1.0) was created after acceptance and updates final publication-quality figures. The repository is archived here:
 
-TBD
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7392211.svg)](https://doi.org/10.5281/zenodo.7392211)
 
 ### Overview
 
