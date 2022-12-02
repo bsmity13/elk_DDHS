@@ -15,6 +15,8 @@ Submitted for review to *Ecology Letters* on July 12, 2022.
 
 Resubmitted to *Ecology Letters* after addressing peer review on October 26, 2022.
 
+Accepted for publication in *Ecology Letters* on November 2, 2022.
+
 ## About Repository
 
 ### Versions 
@@ -36,6 +38,12 @@ This release (v0.1) was created before publishing preprint and before peer-revie
 This release (v0.2) was created in response to peer review and contains all data and code used in the resubmission. The repository is archived here:
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7259278.svg)](https://doi.org/10.5281/zenodo.7259278)
+
+#### Repository version 1.0 -- Final
+
+This release (v1.0) was created after acceptance and updates final publication-quality figures. The repository is archived here:
+
+TBD
 
 ### Overview
 
