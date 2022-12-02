@@ -3,7 +3,7 @@
 #---------------Brian J. Smith--------------X
 #------------------Figures------------------X
 #===========================================X
-#-----------Last update 2022-10-08----------X
+#-----------Last update 2022-12-02----------X
 ############################################X
 
 # For Ecology Letters:
@@ -1627,7 +1627,7 @@ ggsave("fig/high_v_low_RSS.png", plot = hi_v_lo_rss,
        width = 10, height = 4, units = "in",
        device = agg_png)
 
-diff_pal <- brewer.pal(3, "RdBu")
+diff_pal <- rev(brewer.pal(3, "BrBG"))
 diff_pal[1] <- colorspace::darken(diff_pal[1], 0.4)
 diff_pal[3] <- colorspace::darken(diff_pal[3], 0.4)
 
@@ -1635,6 +1635,9 @@ diff_pal[3] <- colorspace::darken(diff_pal[3], 0.4)
     arrange(cell, dens_label) %>% 
     group_by(cell) %>% 
     mutate(diff = log_rss[2] - log_rss[1]) %>% 
+    # OMIT THE CELL WITH GREATEST 'diff'
+    # This cell is dominated by Dailey Lake
+    filter(cell != 35) %>% 
     ggplot(aes(x = x, y = y, fill = diff)) +
     geom_raster() +
     coord_sf(crs = 32612)+
@@ -1660,6 +1663,15 @@ map_rss %>%
             min(diff),
             max(diff))
 
+# Biomass drives the very dark pixel in the north
+# (very low value; pixel is mostly Dailey Lake)
+map_rss %>% 
+  ggplot(aes(x = x, y = y, fill = biomass_orig)) +
+  geom_raster() +
+  coord_sf(crs = 32612)+
+  xlab(NULL) +
+  ylab(NULL)
+
 # Manuscript figures ----
 # ... Figure 1 ----
 # Created in separate project, "Density Prediction Figures"
@@ -1680,7 +1692,7 @@ fig3 <-
   plot_annotation(tag_levels = "A", tag_prefix = "(", tag_suffix = ")")
 
 ggsave("fig/ms/fig3.tif", plot = fig3, device = agg_tiff,
-       width = 170, height = 100, units = "mm", dpi = 500,
+       width = 173, height = 100, units = "mm", dpi = 500,
        scale = 1.2, compression = "lzw")
 
 # ... Figure 4 ----
@@ -1756,9 +1768,9 @@ ggsave("fig/ms/fig5.tif", plot = fig5, device = agg_tiff,
        compression = "lzw")
 
 # Tweetable
-ggsave("fig/tweet/fig5.png", plot = fig5,
-       width = 5, height = 4, units = "in",
-       device = agg_png)
+# ggsave("fig/tweet/fig5.png", plot = fig5,
+#        width = 5, height = 4, units = "in",
+#        device = agg_png)
 
 # ... Figure S1 ----
 # Study area map

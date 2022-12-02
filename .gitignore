@@ -6,6 +6,8 @@ models/
 pred/
 old/
 fig/
+out/
 open_timing.csv
 timing.csv
 README.html
+99_write_kml.R
